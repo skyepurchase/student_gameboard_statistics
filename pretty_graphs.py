@@ -16,7 +16,7 @@ def plot_percentages(data: pd.DataFrame, out: str, name: str):
     sizes = data["sizes"]
 
     plt.pie(sizes, labels=labels, autopct="%1.1f%%")
-    plt.title(f"Percentage Use of Gameboards By Students\n{name}")
+    plt.title(f"Number of Student Made Gameboards Completed\n{name}")
 
     plt.show()
     plt.savefig(out)
@@ -62,5 +62,5 @@ if __name__=='__main__':
         plot_gameboard_completion(df, args.output + "/" + split + ".png", title)
     if args.graph == "pie":
         df = df.rename(columns={"gameboards": "labels", "count": "sizes"})
-        plot_percentages(df, args.output + "/" + split + "-compelete" + ".png", title)
+        plot_percentages(df, args.output + "/" + split + "-complete" + ".png", title)
 

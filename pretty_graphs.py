@@ -62,5 +62,5 @@ if __name__=='__main__':
         plot_gameboard_completion(df, args.output + "/" + split + ".png", title)
     if args.graph == "pie":
         df = df.rename(columns={"gameboards": "labels", "count": "sizes"})
-        plot_percentages(df, args.output + "/" + split + "-complete" + ".png", title)
+        plot_percentages(df, args.output + "/" + split + "-compelete" + ".png", title)
 

@@ -253,8 +253,13 @@ if __name__=='__main__':
         if gameboard_count is not None:
             with open("ada/gameboard_count/" + filename + ".csv", "w") as out:
                 out.write("gameboards,count\n")
+                additional = 0
                 for k, v in gameboard_count.items():
-                    out.write(f"{k},{v}\n")
+                    if k > 4:
+                        additional += v
+                    else:
+                        out.write(f"{k},{v}\n")
+                out.write(f"5+,{additional}")
 
         gameboard_completion = getPartsOfStudentWithSomeGameboards(start,end)
         if gameboard_completion is not None:

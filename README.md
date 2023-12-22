@@ -243,3 +243,77 @@ GROUP BY average_percentage
 ```
 
 The results of these are presented in the scatter plots.
+
+## Statistics breakdown
+
+Changing the query to select the number of students that created a gameboard so that the number of gameboards created is
+recorded. The number of students can then be grouped by how many gameboards they created as the majority make 1
+gameboard
+
+```
+SELECT num_gameboards, COUNT(owner_user_id)
+FROM users_and_gameboards
+WHERE num_gameboards > 0
+GROUP BY num_gameboards
+```
+
+### Statistics
+
+Pie charts have been generated from this data and the `csv`s can also be located in the relavent folder.
+Only last year was considered as Ada is less than a year and Physics queries took longer than time permitted.
+
+```
+ADA
+Range   1 Gameboard     2+ Gameboards
+ADA     335 (51.1%)     321 (48.9%)     % of gameboards made
+PHYSICS 6724 (45.1%)    8173 (54.9%)
+```
+
+The split is fairly close on students that make 1 gameboard compared to those that make multiple. Those that make
+multiple are more likely to be students that actively use the service.
+
+**Note that this is ~50% of ~10% so only 5% actively make gameboards**.
+
+## Number of gameboards completed
+
+To see how many are actually completed rather than just seeing if students complete gameboards the gameboard completion
+query can be modified.
+First a table containing all the gameboards that were fully completed and storing them as `student_id, gameboard_id`
+pairs
+
+```
+correct_gameboard_parts AS (
+    SELECT student_id, gameboard_id, SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS num_correct,
+        COUNT(student_gameboard_parts.question_id) AS total
+    FROM student_gameboard_parts
+    JOIN question_attempts ON student_gameboard_parts.question_id=question_attempts.question_id
+        AND student_gameboard_parts.student_id=question_attempts.user_id
+    GROUP BY student_id, gameboard_id)
+```
+
+Aggregating the number of gameboards per student and then grouping by this aggregate gives the number of students that
+completed `x` gameboards
+
+```
+SELECT num_gameboards, COUNT(student_id)
+FROM (
+    SELECT student_id, COUNT(gameboard_id) AS num_gameboards
+    FROM correct_gameboard_parts
+    GROUP BY student_id) AS num_correct_gameboards
+GROUP BY num_gameboards
+```
+
+### Statistics
+
+```
+ADA
+Range   1 Gameboard     2+ Gameboards
+ADA     102 (79.1%)     27 (21.9%)     % of gameboards completed
+PHYSICS 2550 (75%)      850 (25%)
+```
+
+As seen in the previous statistics very few students actually attempt gameboards at all. Of those that do we see here
+that a marginal number actively create multiple gameboards to do themselves and instead make one or just attempt one
+self-made one.
+
+**Note this is again ~25% of only ~5% of active students, so ~1% of users actively use gameboards**

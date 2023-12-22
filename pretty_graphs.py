@@ -16,7 +16,7 @@ def plot_percentages(data: pd.DataFrame, out: str, name: str):
     sizes = data["sizes"]
 
     plt.pie(sizes, labels=labels, autopct="%1.1f%%")
-    plt.title(f"Number of Student Made Gameboards Completed\n{name}")
+    plt.title(f"Number of Gameboards Created by Students\n{name}")
 
     plt.show()
     plt.savefig(out)

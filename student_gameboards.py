@@ -6,7 +6,7 @@ import os
 CONN = psycopg2.connect(dbname='rutherford',
                         user=os.environ.get("DB_USER"),
                         host='localhost',
-                        port=65435,
+                        port=65433,
                         password=os.environ.get("DB_PASS"))
 CUR = CONN.cursor()
 
@@ -226,11 +226,11 @@ def getNumStudents(start_date: str = "2023-09-01", end_date: str = "2023-10-01")
 
 if __name__=='__main__':
     date_ranges = [
-        ("Last Year", "2022-12-19", "2023-12-19"),
-#        ("Last Academic Year", "2022-09-01", "2023-09-01"),
-#        ("Last two years", "2021-12-19", "2023-12-19"),
-#        ("Last two academic years", "2021-09-01", "2023-09-01"),
-#        ("All Time", "2000-01-01", "2023-12-30"),
+#        ("Last Year", "2022-12-19", "2023-12-19"),
+        ("Last Academic Year", "2022-09-01", "2023-09-01"),
+        ("Last two years", "2021-12-19", "2023-12-19"),
+        ("Last two academic years", "2021-09-01", "2023-09-01"),
+        ("All Time", "2000-01-01", "2023-12-30"),
     ]
     for name, start, end in date_ranges:
         filename = name.replace(" ", "-").lower()
@@ -247,11 +247,11 @@ if __name__=='__main__':
 
         if num_students is None or student_gameboards is None or complete_gameboards is None:
             print("Error! One of the queries failed!")
-            quit()
+        continue
 
         gameboard_count = getNumStudentsWithSomeGameboards(start,end)
         if gameboard_count is not None:
-            with open("ada/gameboard_count/" + filename + ".csv", "w") as out:
+            with open("physics/gameboard_count/" + filename + ".csv", "w") as out:
                 out.write("gameboards,count\n")
                 additional = 0
                 for k, v in gameboard_count.items():
@@ -263,10 +263,11 @@ if __name__=='__main__':
 
         gameboard_completion = getPartsOfStudentWithSomeGameboards(start,end)
         if gameboard_completion is not None:
-            with open("ada/gameboard_completion/" + filename + ".csv", "w") as out:
+            with open("physics/gameboard_completion/" + filename + ".csv", "w") as out:
                 out.write("gameboards,count\n")
                 for k, v in gameboard_completion.items():
                     out.write(f"{k},{v}\n")
+        quit()
 
         if data is not None:
             no_attempt = data[0] if 0 in data else 0
@@ -274,7 +275,7 @@ if __name__=='__main__':
             print(f"{no_attempt} made no attempt")
             print(f"{complete} completed all gameboards\n\n")
 
-            with open("ada/count/" + filename + ".csv", "w") as out:
+            with open("physics/count/" + filename + ".csv", "w") as out:
                 out.write("range,count\n")
                 out.write(f"No Gameboard,{num_students-student_gameboards}\n")
                 out.write(f"No Attempt,{student_gameboards-complete_gameboards}\n")

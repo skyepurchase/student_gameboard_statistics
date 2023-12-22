@@ -206,7 +206,7 @@ Last two academic years 177250  20785           11.7       4873     23.4        
 
 ADA
 Range                   Total   With Gameboard  Percentage Complete Percentage  All     Percentage
-Last year               4356    656             15.1       519      19.7        50      7.6
+Last year               4356    656             15.1       129      19.7        50      7.6
 ```
 
 These statistics are presented in the pie charts

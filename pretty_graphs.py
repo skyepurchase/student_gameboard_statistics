@@ -61,6 +61,6 @@ if __name__=='__main__':
         breakpoint()
         plot_gameboard_completion(df, args.output + "/" + split + ".png", title)
     if args.graph == "pie":
-        df = df.rename(columns={"range": "labels", "count": "sizes"})
-        plot_percentages(df, args.output + "/" + split + ".png", title)
+        df = df.rename(columns={"gameboards": "labels", "count": "sizes"})
+        plot_percentages(df, args.output + "/" + split + "-complete" + ".png", title)
 

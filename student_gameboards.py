@@ -1,4 +1,5 @@
-from typing import Union
+from typing import Dict, Union
+from pprint import pprint
 import psycopg2
 import os
 
@@ -55,6 +56,52 @@ def getPercentageOfStudentGameboards(start_date: str = "2023-09-01", end_date: s
     return res_map
 
 
+def getPartsOfStudentWithSomeGameboards(start_date: str = "2023-09-01", end_date: str = "2023-10-01") -> Dict:
+    CUR.execute("""
+    WITH student_gameboard_pages AS (
+        SELECT gameboards.id AS gameboard_id, owner_user_id AS student_id, contents_json->>'id' AS page_id, idx AS gameboard_question_index
+        FROM gameboards, UNNEST(contents) WITH ORDINALITY AS subtable(contents_json, idx)
+        WHERE creation_date >= %s::date
+            AND creation_date < %s::date
+            AND owner_user_id IN (
+                SELECT DISTINCT user_id
+                FROM question_attempts
+                JOIN users ON users.id=question_attempts.user_id
+                WHERE timestamp >= %s::date
+                    AND timestamp < %s::date
+                    AND role = 'STUDENT')),
+
+    student_gameboard_parts AS (
+        SELECT student_id, gameboard_id, question_id
+        FROM student_gameboard_pages
+        JOIN content_data ON student_gameboard_pages.page_id=content_data.page_id
+            AND type<>'quick'),
+
+    correct_gameboard_parts AS (
+        SELECT student_id, gameboard_id, SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS num_correct,
+            COUNT(student_gameboard_parts.question_id) AS total
+        FROM student_gameboard_parts
+        JOIN question_attempts ON student_gameboard_parts.question_id=question_attempts.question_id
+            AND student_gameboard_parts.student_id=question_attempts.user_id
+        GROUP BY student_id, gameboard_id)
+
+    SELECT num_gameboards, COUNT(student_id)
+    FROM (
+        SELECT student_id, COUNT(gameboard_id) AS num_gameboards
+        FROM correct_gameboard_parts
+        WHERE num_correct = total
+        GROUP BY student_id) AS num_correct_gameboards
+    GROUP BY num_gameboards
+    """, (start_date, end_date, start_date, end_date))
+
+    res = CUR.fetchall()
+    res_map = {}
+    if res:
+        for k, v in res:
+            res_map[k] = v
+    return res_map
+
+
 def getPartsOfStudentGameboards(start_date: str = "2023-09-01", end_date: str = "2023-10-01") -> Union[int, None]:
     CUR.execute("""
     WITH student_gameboard_pages AS (
@@ -92,6 +139,36 @@ def getPartsOfStudentGameboards(start_date: str = "2023-09-01", end_date: str = 
         return res[0]
     else:
         return None
+
+
+def getNumStudentsWithSomeGameboards(start_date: str = "2023-09-01", end_date: str = "2023-10-01") -> Dict:
+    CUR.execute("""
+    WITH users_and_gameboards AS (
+        SELECT owner_user_id, count(gameboards.id) as num_gameboards
+        FROM gameboards
+        WHERE creation_date >= %s::date
+            AND creation_date < %s::date
+            AND owner_user_id IN (
+                SELECT DISTINCT user_id
+                FROM question_attempts
+                JOIN users ON users.id=question_attempts.user_id
+                WHERE timestamp >= %s::date
+                    AND timestamp < %s::date
+                    AND role = 'STUDENT')
+        GROUP BY owner_user_id)
+
+    SELECT num_gameboards, COUNT(owner_user_id)
+    FROM users_and_gameboards
+    WHERE num_gameboards > 0
+    GROUP BY num_gameboards;
+    """, (start_date, end_date, start_date, end_date))
+
+    res = CUR.fetchall()
+    res_map = {}
+    if res:
+        for k, v in res:
+            res_map[k] = v
+    return res_map
 
 
 def getNumStudentsWithGameboards(start_date: str = "2023-09-01", end_date: str = "2023-10-01") -> Union[int, None]:
@@ -171,6 +248,20 @@ if __name__=='__main__':
         if num_students is None or student_gameboards is None or complete_gameboards is None:
             print("Error! One of the queries failed!")
             quit()
+
+        gameboard_count = getNumStudentsWithSomeGameboards(start,end)
+        if gameboard_count is not None:
+            with open("ada/gameboard_count/" + filename + ".csv", "w") as out:
+                out.write("gameboards,count\n")
+                for k, v in gameboard_count.items():
+                    out.write(f"{k},{v}\n")
+
+        gameboard_completion = getPartsOfStudentWithSomeGameboards(start,end)
+        if gameboard_completion is not None:
+            with open("ada/gameboard_completion/" + filename + ".csv", "w") as out:
+                out.write("gameboards,count\n")
+                for k, v in gameboard_completion.items():
+                    out.write(f"{k},{v}\n")
 
         if data is not None:
             no_attempt = data[0] if 0 in data else 0
